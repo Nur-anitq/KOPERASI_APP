@@ -40,7 +40,7 @@ class _LoginPageState extends State<LoginPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "KOPERASI SMART",
+            "KOPERASI SMART55555",
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
