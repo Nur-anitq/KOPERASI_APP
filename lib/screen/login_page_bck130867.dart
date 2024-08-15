@@ -16,29 +16,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<Map<String, dynamic>> getLogin(
     String member_no, String password, String br_no) async {
   const String baseUrl = 'https://online.iscop.co.th/ws/';
-  const String endpoint = 'login_user_test.php'; 
-  const int timeout = 1000; // Timeout duration in seconds
+  const String endpoint = 'login_user.php';
+  const int timeout = 10; // Timeout duration in seconds
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String token = prefs.getString('token') ?? '';
 
   Map<String, String> headers = {
-    'Content-Type': 'application/json;charset=utf-8',
+    'Content-Type': 'application/x-www-form-urlencoded',
   };
-  
-  Map<String, String> data = {
+
+  Map<String, String> body = {
     'member_no': member_no,
     'br_no': br_no,
     'password': password,
     'token': token,
-    'login_type': 'android'
+    'login_type': 'android',
   };
-  
-  // print(data);
-  var body = json.encode(data);
-  print(body);
   try {
-    
     final response = await http
         .post(
           Uri.parse('$baseUrl$endpoint'),
@@ -46,24 +41,16 @@ Future<Map<String, dynamic>> getLogin(
           body: body,
         )
         .timeout(const Duration(seconds: timeout));
-    
+
     if (response.statusCode == 200) {
-        // Map<String, dynamic> data = jsonDecode(response.body);  
-        // if (data['success'] == '0'){
-        //   print("so");
-        //   return json.decode(response.body);
-        // }
       return json.decode(response.body);
     } else {
-      // throw Exception('Failed to load data : ${response.statusCode}');
-      throw Exception('Failed to load data : ${response.body}');
+      throw Exception('Failed to load data');
     }
-    
   } catch (e) {
     print(e.toString());
     return {};
   }
-    
 }
 
 // Function to get member_no and br_no
@@ -117,14 +104,6 @@ class _LoginPageState extends State<LoginPage> {
     );
     return;
   }
-//====================So add==========//
-  if (username.length < 10 ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('เลขทะเบียนสมาชิกไม่ถูกต้อง')),
-    );
-    return;
-  }
-//========================End so add==============
 
   String member_no = getMemberNo(username);
   String br_no = getMemberBr(username);
@@ -134,44 +113,16 @@ class _LoginPageState extends State<LoginPage> {
 
     if (response.isNotEmpty) {
       // Login successful
-      //=======================so add
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
+      );
+      print('Member No: $member_no');
+      print('Branch No: $br_no');
 
-      print(response);
-      print('so');
-      
-      if (response['success'].toString() == '1'){
-          
-          if (response['is_first'].toString() == '1'){
-            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('คุณยังไม่ได้สมัครสมาชิก')),
-            );
-          }else{
-              if(response['status_pin'].toString() == '0'){
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
-                    );
-                    print('Member No: $member_no');
-                    print('Branch No: $br_no');
-
-                    // เปลี่ยนหน้าไปยังหน้าหลัก
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    );
-              }else{
-                 ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('ดำเนินการสร้าง PIN ...')),
-                );
-              }
-            
-          }
-      }else{
-         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ทะเบียนสมาชิก หรือ รหัสผ่าน ไม่ถูกต้อง')),
-            );
-      }
-      
-      //==================end so add
-
+      // เปลี่ยนหน้าไปยังหน้าหลัก
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
     } else {
       // Login failed
       ScaffoldMessenger.of(context).showSnackBar(

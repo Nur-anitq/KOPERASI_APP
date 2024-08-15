@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class CustomScaffold extends StatelessWidget {
   const CustomScaffold({super.key, this.child});
-final Widget? child;
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -15,18 +17,16 @@ final Widget? child;
       body: Stack(
         children: [
           Image.asset(
-            'assets/images/bg.jpg',
+            'assets/images/background/bg.jpg',
             fit: BoxFit.cover,
-            width: double.infinity,
-            height: 500,
-            ),
-            SafeArea(
-              child: child!,
-            ),
+            width: screenWidth,
+            // height: screenHeight,
+          ),
+          SafeArea(
+            child: child!,
+          ),
         ],
-        
       ),
     );
   }
 }
-

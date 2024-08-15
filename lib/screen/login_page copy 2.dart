@@ -2,43 +2,31 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:koperasiapp/screen/home_page.dart';
 import 'package:koperasiapp/screen/signup_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
-
-//add 13-08-67
-//end add 13-08-67
-
-
 // Function to get login response
 Future<Map<String, dynamic>> getLogin(
-    String member_no, String password, String br_no) async {
+    String memberNo, String password, String brNo) async {
   const String baseUrl = 'https://online.iscop.co.th/ws/';
-  const String endpoint = 'login_user_test.php'; 
-  const int timeout = 1000; // Timeout duration in seconds
+  const String endpoint = 'login_user.php';
+  const int timeout = 10; // Timeout duration in seconds
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String token = prefs.getString('token') ?? '';
 
   Map<String, String> headers = {
-    'Content-Type': 'application/json;charset=utf-8',
+    'Content-Type': 'application/x-www-form-urlencoded',
   };
-  
-  Map<String, String> data = {
-    'member_no': member_no,
-    'br_no': br_no,
+
+  Map<String, String> body = {
+    'member_no': memberNo,
+    'br_no': brNo,
     'password': password,
     'token': token,
-    'login_type': 'android'
+    'login_type': 'android',
   };
-  
-  // print(data);
-  var body = json.encode(data);
-  print(body);
   try {
-    
     final response = await http
         .post(
           Uri.parse('$baseUrl$endpoint'),
@@ -46,24 +34,16 @@ Future<Map<String, dynamic>> getLogin(
           body: body,
         )
         .timeout(const Duration(seconds: timeout));
-    
+
     if (response.statusCode == 200) {
-        // Map<String, dynamic> data = jsonDecode(response.body);  
-        // if (data['success'] == '0'){
-        //   print("so");
-        //   return json.decode(response.body);
-        // }
       return json.decode(response.body);
     } else {
-      // throw Exception('Failed to load data : ${response.statusCode}');
-      throw Exception('Failed to load data : ${response.body}');
+      throw Exception('Failed to load data');
     }
-    
   } catch (e) {
     print(e.toString());
     return {};
   }
-    
 }
 
 // Function to get member_no and br_no
@@ -81,10 +61,10 @@ Future<Map<String, dynamic>> performLogin(
   Map<String, dynamic> json = {};
 
   if (status) {
-    String member_no = getMemberNo(username);
-    String br_no = getMemberBr(username);
+    String memberNo = getMemberNo(username);
+    String brNo = getMemberBr(username);
 
-    json = await getLogin(member_no, password, br_no);
+    json = await getLogin(memberNo, password, brNo);
   }
 
   return json;
@@ -108,82 +88,30 @@ class _LoginPageState extends State<LoginPage> {
   bool _status = true; // Example status variable
 
   void _login() async {
-  String username = _usernameController.text;
-  String password = _passwordController.text;
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+    String memberNo = getMemberNo(username);
+    String brNo = getMemberBr(username);
 
-  if (username.isEmpty || password.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('กรุณากรอกชื่อผู้ใช้และรหัสผ่าน')),
-    );
-    return;
-  }
-//====================So add==========//
-  if (username.length < 10 ) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('เลขทะเบียนสมาชิกไม่ถูกต้อง')),
-    );
-    return;
-  }
-//========================End so add==============
+    Map<String, dynamic> response =
+        await performLogin(username, password, _status);
 
-  String member_no = getMemberNo(username);
-  String br_no = getMemberBr(username);
-
-  try {
-    Map<String, dynamic> response = await performLogin(username, password, _status);
-
+    // Handle the response
     if (response.isNotEmpty) {
       // Login successful
-      //=======================so add
-
-      print(response);
-      print('so');
-      
-      if (response['success'].toString() == '1'){
-          
-          if (response['is_first'].toString() == '1'){
-            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('คุณยังไม่ได้สมัครสมาชิก')),
-            );
-          }else{
-              if(response['status_pin'].toString() == '0'){
-                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('เข้าสู่ระบบสำเร็จ')),
-                    );
-                    print('Member No: $member_no');
-                    print('Branch No: $br_no');
-
-                    // เปลี่ยนหน้าไปยังหน้าหลัก
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => HomePage()),
-                    );
-              }else{
-                 ScaffoldMessenger.of(context).showSnackBar(
-                 const SnackBar(content: Text('ดำเนินการสร้าง PIN ...')),
-                );
-              }
-            
-          }
-      }else{
-         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('ทะเบียนสมาชิก หรือ รหัสผ่าน ไม่ถูกต้อง')),
-            );
-      }
-      
-      //==================end so add
-
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Login successful')));
+      print(memberNo);
+      print(brNo);
     } else {
       // Login failed
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('เข้าสู่ระบบล้มเหลว')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Login failed')));
+      print(memberNo);
+      print(brNo);
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ: $e')),
-    );
   }
-}
+  // end add 230767
 
   bool rememberPassword = true;
 
